@@ -4,7 +4,6 @@ import java.io.IOException;
 
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.decorators.CcpStringDecorator;
-import com.ccp.dependency.injection.CcpImplementation;
 import com.ccp.especifications.email.CcpEmailSender;
 import com.ccp.utils.Utils;
 import com.sendgrid.Content;
@@ -15,8 +14,7 @@ import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 
-@CcpImplementation
-public class CcpEmailSenderSendGrid implements CcpEmailSender {
+class EmailSenderSendGrid implements CcpEmailSender {
 
 	@Override
 	public void send(String subject, String emailTo, String message, String format) {
