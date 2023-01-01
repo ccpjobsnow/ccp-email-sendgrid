@@ -1,76 +1,80 @@
 package com.ccp.implementations.emails.sendgrid;
 
-import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.decorators.CcpStringDecorator;
+import com.ccp.dependency.injection.CcpDependencyInject;
 import com.ccp.especifications.email.CcpEmailSender;
-import com.ccp.utils.Utils;
-import com.sendgrid.Content;
-import com.sendgrid.Email;
-import com.sendgrid.Mail;
-import com.sendgrid.Method;
-import com.sendgrid.Request;
-import com.sendgrid.Response;
-import com.sendgrid.SendGrid;
+import com.ccp.especifications.http.CcpHttpHandler;
+import com.ccp.especifications.http.CcpHttpRequester;
+import com.ccp.especifications.http.CcpHttpResponseType;
+import com.ccp.exceptions.http.UnexpectedHttpStatus;
 
 class EmailSenderSendGrid implements CcpEmailSender {
 
-	@Override
-	public void send(String subject, String emailTo, String message, String format) {
-		if (new CcpStringDecorator(emailTo).email().isValid() == false) {
+	@CcpDependencyInject
+	private CcpHttpRequester ccpHttp;
+	
+	public void send(CcpMapDecorator emailParameters) {
+
+		String emailTo = emailParameters.getAsString("email");
+
+		boolean isInvalidEmail = new CcpStringDecorator(emailTo).email().isValid() == false;
+		
+		if (isInvalidEmail) {
 			return;
 		}
-		String sendgridSender = System.getenv("SENDGRID_SENDER");
-		String sendgridApiKey = System.getenv("SENDGRID_KEY");
-
-		Email to = new Email(emailTo);
-		Email from = new Email(sendgridSender);
-		Content content = new Content(format, message);
-		Mail mail = new Mail(from, subject, to, content);
-
-		// Instantiates SendGrid client.
-		SendGrid sendgrid = new SendGrid(sendgridApiKey);
-
-		// Instantiate SendGrid request.
-		Request request = new Request();
-
-		try {
-			// Set request configuration.
-			request.setMethod(Method.POST);
-			request.setEndpoint("mail/send");
-			request.setBody(mail.build());
-
-			// Use the client to send the API request.
-
-			Response response;
-			try {
-				response = sendgrid.api(request);
-			} catch (Exception e) {
-				System.out.println("Erro de rede, repetindo novamente tentativa de enviar e-mail");
-				Utils.sleep(1000);
-				this.send(subject, emailTo, message, format);
-				return;
-			}
-
-			if (response.getStatusCode() != 202) {
-				System.out.println("Aconteceu algum erro, pois o sendGrid retornou " + response.getStatusCode());
-				return;
-			}
-
-		} catch (IOException e) {
-			throw new RuntimeException(e);
+		
+		String sendgridSender = emailParameters.getAsString("sender");
+		String format = emailParameters.getAsString("format");
+		
+		if(format.trim().isEmpty()) {
+			format = "text/html";
 		}
 		
+		String message = emailParameters.getAsString("message");
+		String subject = emailParameters.getAsString("subject");
+		
+		String sendgridUserAgent =  emailParameters.getAsString("apiUserAgent");
+		String sendgridApiMethod =  emailParameters.getAsString("apiMethod");
+		String sendgridApiKey =  emailParameters.getAsString("apiEmailKey");
+		String sendgridApiUrl =  emailParameters.getAsString("apiUrl");
+
+		CcpHttpHandler ccpHttpHandler = new CcpHttpHandler(202, this.ccpHttp);
+		
+		CcpMapDecorator headers = new CcpMapDecorator()
+				.put("Authorization", sendgridApiKey)
+				.put("User-agent", sendgridUserAgent)
+				.put("Accept", "application/json")
+				
+		;
+		
+		CcpMapDecorator personalizations = this.getPersonalizations(emailParameters);
+		
+		CcpMapDecorator body = new CcpMapDecorator()
+				.addToItem("from", "email", sendgridSender)
+				.put("subject", subject)
+				.put("personalizations", personalizations)
+				.addToItem("content", "type", format)
+				.addToItem("content", "value", message)
+				;
+		
+		try {
+			ccpHttpHandler.executeHttpRequest(sendgridApiUrl, sendgridApiMethod, headers, body, CcpHttpResponseType.string);
+		} catch (UnexpectedHttpStatus e) {
+			throw new EmailWasNotSent(e.response.httpResponse);
+		}
 	}
 
-	@Override
-	public String sendFailure(Throwable e) {
-		String msg = new CcpMapDecorator(e).asPrettyJson();
-		String hash = new CcpStringDecorator(msg).hash().asString("SHA1");
-		String email = System.getenv("SUPPORT_EMAIL");
-		this.send(email, "Erro: " + e.getMessage(), msg);
-		return hash;
+	
+	private CcpMapDecorator getPersonalizations(CcpMapDecorator emailParameters) {
+		List<String> emails = emailParameters.getAsStringList("emails");
+		List<CcpMapDecorator> to = emails.stream().map(email -> new CcpMapDecorator().put("email",email)).collect(Collectors.toList());
+		return new CcpMapDecorator().addToList("to", to);
 	}
 	
 }
+
+
