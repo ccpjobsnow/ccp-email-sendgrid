@@ -48,7 +48,6 @@ class EmailSenderSendGrid implements CcpEmailSender {
 				.put("Authorization", sendgridApiKey)
 				.put("User-agent", sendgridUserAgent)
 				.put("Accept", "application/json")
-				
 		;
 		
 		CcpMapDecorator personalizations = this.getPersonalizations(emailParameters);
@@ -64,7 +63,15 @@ class EmailSenderSendGrid implements CcpEmailSender {
 		try {
 			ccpHttpHandler.executeHttpRequest(sendgridApiUrl, sendgridApiMethod, headers, body, CcpHttpResponseType.string);
 		} catch (UnexpectedHttpStatus e) {
-			throw new EmailWasNotSent(e.response.httpResponse);
+			if(e.response.httpStatus < 500) {
+				throw new ThereWasClientError(e.response);
+			}
+
+			if(e.response.httpStatus > 599) {
+				throw new ThereWasClientError(e.response);
+				
+			}
+			throw new EmailApiIsUnavailable();
 		}
 	}
 
