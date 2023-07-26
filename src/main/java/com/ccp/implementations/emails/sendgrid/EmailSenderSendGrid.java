@@ -78,10 +78,7 @@ class EmailSenderSendGrid implements CcpEmailSender {
 	
 	private List<CcpMapDecorator> getPersonalizations(CcpMapDecorator emailParameters) {
 		
-		//{"to":[{"email":"onias@noxxonsat.com.br"}]}
-	
 		List<String> emails = emailParameters.getAsStringList("emails", "email");
-		
 		
 		List<Map<String, Object>> to = emails.stream().map(email -> new CcpMapDecorator().put("email",email).content).collect(Collectors.toList());
 		List<CcpMapDecorator> asList = Arrays.asList( new CcpMapDecorator().put("to", to));
