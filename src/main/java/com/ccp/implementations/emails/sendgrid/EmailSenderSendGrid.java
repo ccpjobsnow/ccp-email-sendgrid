@@ -12,6 +12,9 @@ import com.ccp.especifications.email.CcpEmailSender;
 import com.ccp.especifications.http.CcpHttpHandler;
 import com.ccp.especifications.http.CcpHttpRequester;
 import com.ccp.especifications.http.CcpHttpResponseType;
+import com.ccp.exceptions.email.EmailApiIsUnavailable;
+import com.ccp.exceptions.email.InvalidEmail;
+import com.ccp.exceptions.email.ThereWasClientError;
 import com.ccp.exceptions.http.UnexpectedHttpStatus;
 
 class EmailSenderSendGrid implements CcpEmailSender {
@@ -24,9 +27,9 @@ class EmailSenderSendGrid implements CcpEmailSender {
 		String emailTo = emailParameters.getAsString("email");
 
 		boolean isInvalidEmail = new CcpStringDecorator(emailTo).email().isValid() == false;
-		
+		//TODO LISTA DE DESTINATARIOS
 		if (isInvalidEmail) {
-			return;
+			throw new InvalidEmail(emailTo);
 		}
 		
 		String sendgridSender = emailParameters.getAsString("sender");
