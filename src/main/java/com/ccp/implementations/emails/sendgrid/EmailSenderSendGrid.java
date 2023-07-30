@@ -11,6 +11,7 @@ import com.ccp.dependency.injection.CcpDependencyInject;
 import com.ccp.especifications.email.CcpEmailSender;
 import com.ccp.especifications.http.CcpHttpHandler;
 import com.ccp.especifications.http.CcpHttpRequester;
+import com.ccp.especifications.http.CcpHttpResponse;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.email.EmailApiIsUnavailable;
 import com.ccp.exceptions.email.InvalidEmail;
@@ -22,7 +23,7 @@ class EmailSenderSendGrid implements CcpEmailSender {
 	@CcpDependencyInject
 	private CcpHttpRequester ccpHttp;
 	
-	public void send(CcpMapDecorator emailParameters) {
+	public CcpMapDecorator send(CcpMapDecorator emailParameters) {
 
 		String emailTo = emailParameters.getAsString("email");
 
@@ -64,18 +65,36 @@ class EmailSenderSendGrid implements CcpEmailSender {
 				;
 		
 		try {
+//			this.throwErrorTest(sendgridApiKey, sendgridApiUrl, headers, body);
 			ccpHttpHandler.executeHttpRequest(sendgridApiUrl, "POST", headers, body, CcpHttpResponseType.string);
+			EmailApiIsUnavailable data = this.getData(sendgridApiKey, sendgridApiUrl, headers, body);
+			CcpMapDecorator asEntity = data.asEntity();
+			return asEntity;
 		} catch (UnexpectedHttpStatus e) {
+			
 			if(e.response.httpStatus < 500) {
-				throw new ThereWasClientError(e.response);
+				throw new ThereWasClientError(e.response, sendgridApiUrl, sendgridApiKey, body, headers);
 			}
 
 			if(e.response.httpStatus > 599) {
-				throw new ThereWasClientError(e.response);
-				
+				throw new ThereWasClientError(e.response, sendgridApiUrl, sendgridApiKey, body, headers);
 			}
-			throw new EmailApiIsUnavailable();
+			throw new EmailApiIsUnavailable(e.response, sendgridApiUrl, sendgridApiKey, body, headers);
 		}
+
+	}
+
+
+	void throwErrorTest(String sendgridApiKey, String sendgridApiUrl, CcpMapDecorator headers, CcpMapDecorator body) {
+		EmailApiIsUnavailable ex = this.getData(sendgridApiKey, sendgridApiUrl, headers, body);
+		throw ex;
+	}
+
+
+	private EmailApiIsUnavailable getData(String sendgridApiKey, String sendgridApiUrl, CcpMapDecorator headers, CcpMapDecorator body) {
+		CcpHttpResponse x = new CcpHttpResponse("x", 500);
+		EmailApiIsUnavailable ex = new EmailApiIsUnavailable(x, sendgridApiUrl, sendgridApiKey, body, headers);
+		return ex;
 	}
 
 	
