@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.dependency.injection.CcpDependencyInject;
@@ -14,7 +15,6 @@ import com.ccp.especifications.http.CcpHttpRequester;
 import com.ccp.especifications.http.CcpHttpResponse;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.email.EmailApiIsUnavailable;
-import com.ccp.exceptions.email.InvalidEmail;
 import com.ccp.exceptions.email.ThereWasClientError;
 import com.ccp.exceptions.http.UnexpectedHttpStatus;
 
@@ -25,13 +25,6 @@ class EmailSenderSendGrid implements CcpEmailSender {
 	
 	public CcpMapDecorator send(CcpMapDecorator emailParameters) {
 
-		String emailTo = emailParameters.getAsString("email");
-
-		boolean isInvalidEmail = new CcpStringDecorator(emailTo).email().isValid() == false;
-		//TODO LISTA DE DESTINATARIOS
-		if (isInvalidEmail) {
-			throw new InvalidEmail(emailTo);
-		}
 		
 		String sendgridSender = emailParameters.getAsString("sender");
 		String format = emailParameters.getAsString("format");
@@ -101,6 +94,11 @@ class EmailSenderSendGrid implements CcpEmailSender {
 	private List<CcpMapDecorator> getPersonalizations(CcpMapDecorator emailParameters) {
 		
 		List<String> emails = emailParameters.getAsStringList("emails", "email");
+		List<CcpEmailDecorator> invalidEmails = emails.stream().map(email -> new CcpStringDecorator(email).email()).filter(x -> x.isValid() == false).collect(Collectors.toList());
+		boolean hasInvalidEmails = invalidEmails.isEmpty() == false;
+		if(hasInvalidEmails) {
+			throw new RuntimeException("some mail address are not valids: " + invalidEmails);
+		}
 		
 		List<Map<String, Object>> to = emails.stream().map(email -> new CcpMapDecorator().put("email",email).content).collect(Collectors.toList());
 		List<CcpMapDecorator> asList = Arrays.asList( new CcpMapDecorator().put("to", to));
