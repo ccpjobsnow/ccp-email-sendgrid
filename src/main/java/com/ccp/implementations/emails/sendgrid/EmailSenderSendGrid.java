@@ -14,17 +14,16 @@ import com.ccp.especifications.email.CcpEmailSender;
 import com.ccp.especifications.http.CcpHttpHandler;
 import com.ccp.especifications.http.CcpHttpRequester;
 import com.ccp.especifications.http.CcpHttpResponseType;
-import com.ccp.exceptions.http.CcpHttpClientError;
-import com.ccp.exceptions.http.CcpHttpError;
-import com.ccp.exceptions.http.CcpHttpUnexpectedStatus;
 import com.ccp.process.ThrowException;
-
+enum X{
+	email
+}
 class EmailSenderSendGrid implements CcpEmailSender {
 
 	@CcpDependencyInject
 	private CcpHttpRequester ccpHttp;
 	
-	public CcpMapDecorator send(CcpMapDecorator emailParameters) {
+	public void send(CcpMapDecorator emailParameters) {
 
 		
 		String sendgridSender = emailParameters.getAsString("sender");
@@ -64,61 +63,11 @@ class EmailSenderSendGrid implements CcpEmailSender {
 				.addToList("content", new CcpMapDecorator().put("type", format).put("value", message))
 				;
 		
-		try {
-//			this.throwErrorTest(sendgridApiKey, sendgridApiUrl, headers, body);
-			ccpHttpHandler.executeHttpRequest(sendgridApiUrl, "POST", headers, body, CcpHttpResponseType.singleRecord);
-			CcpHttpClientError data = this.getData(sendgridApiKey, sendgridApiUrl, headers, body);
-			CcpMapDecorator asEntity = data.entity;
-			return asEntity;
-		} catch (CcpHttpUnexpectedStatus e) {
-			
-			if(e.response.httpStatus < 500) {
-				throw this.throwException(sendgridApiKey, sendgridApiUrl, headers, body, e);
-
-			}
-
-			if(e.response.httpStatus > 599) {
-				throw this.throwException(sendgridApiKey, sendgridApiUrl, headers, body, e);
-			}
-			throw this.throwException(sendgridApiKey, sendgridApiUrl, headers, body, e);
-		}
+//		this.throwErrorTest(sendgridApiKey, sendgridApiUrl, headers, body);
+		ccpHttpHandler.executeHttpRequest(sendgridApiUrl, "POST", headers, body, CcpHttpResponseType.singleRecord, X.email);
 
 	}
 
-
-	private CcpHttpError throwException(String sendgridApiKey, String sendgridApiUrl, CcpMapDecorator headers,
-			CcpMapDecorator body, CcpHttpUnexpectedStatus e) {
-		CcpHttpError addDetail2 = this.getException(sendgridApiKey, sendgridApiUrl, headers, body);
-		CcpHttpError addDetail = addDetail2
-		.addDetail("httpResponse", e.response.httpResponse)
-		.addDetail("httpStatus", e.response.httpStatus);
-		
-		return addDetail;
-	}
-
-
-	private CcpHttpError getException(String sendgridApiKey, String sendgridApiUrl, CcpMapDecorator headers,
-			CcpMapDecorator body) {
-		CcpHttpError addDetail2 = new CcpHttpClientError()
-				.addDetail("sendgridApiUrl", sendgridApiUrl)
-				.addDetail("sendgridApiKey", sendgridApiKey)
-				.addDetail("headers", headers)
-				.addDetail("body", body);
-		return addDetail2;
-	}
-	
-
-	void throwErrorTest(String sendgridApiKey, String sendgridApiUrl, CcpMapDecorator headers, CcpMapDecorator body) {
-		CcpHttpClientError ex = this.getData(sendgridApiKey, sendgridApiUrl, headers, body);
-		throw ex;
-	}
-
-
-	private CcpHttpClientError getData(String sendgridApiKey, String sendgridApiUrl, CcpMapDecorator headers, CcpMapDecorator body) {
-		throw this.getException(sendgridApiKey, sendgridApiUrl, headers, body);
-	}
-
-	
 	private List<CcpMapDecorator> getPersonalizations(CcpMapDecorator emailParameters) {
 		
 		List<String> emails = emailParameters.getAsStringList("emails", "email");
