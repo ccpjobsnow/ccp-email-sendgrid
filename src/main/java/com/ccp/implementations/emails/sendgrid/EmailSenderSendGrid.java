@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import com.ccp.constantes.CcpConstants;
 import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.decorators.CcpStringDecorator;
@@ -14,7 +13,6 @@ import com.ccp.especifications.email.CcpEmailSender;
 import com.ccp.especifications.http.CcpHttpHandler;
 import com.ccp.especifications.http.CcpHttpRequester;
 import com.ccp.especifications.http.CcpHttpResponseType;
-import com.ccp.process.ThrowException;
 enum X{
 	email
 }
@@ -23,7 +21,7 @@ class EmailSenderSendGrid implements CcpEmailSender {
 	@CcpDependencyInject
 	private CcpHttpRequester ccpHttp;
 	
-	public void send(CcpMapDecorator emailParameters) {
+	public CcpMapDecorator send(CcpMapDecorator emailParameters) {
 
 		
 		String sendgridSender = emailParameters.getAsString("sender");
@@ -40,13 +38,8 @@ class EmailSenderSendGrid implements CcpEmailSender {
 		String sendgridApiKey =  systemProperties.getAsString("sendgridApiKey");
 		String sendgridApiUrl =  systemProperties.getAsString("sendGridSendEmailUrl");
 
-		CcpMapDecorator handlers = new CcpMapDecorator()
-				.put("401", new ThrowException(new RuntimeException("The api key '" + sendgridApiKey + "' is invalid in the SendGrid API")))
-				.put("404", new ThrowException(new RuntimeException("The url '" + sendgridApiUrl + "' doesn't exist in the SendGrid API" )))
-				.put("202", CcpConstants.DO_NOTHING)
-				;
 
-		CcpHttpHandler ccpHttpHandler = new CcpHttpHandler(handlers, this.ccpHttp);
+		CcpHttpHandler ccpHttpHandler = new CcpHttpHandler(202, this.ccpHttp);
 		
 		CcpMapDecorator headers = new CcpMapDecorator()
 				.put("Authorization", "Bearer " + sendgridApiKey)
@@ -65,7 +58,7 @@ class EmailSenderSendGrid implements CcpEmailSender {
 		
 //		this.throwErrorTest(sendgridApiKey, sendgridApiUrl, headers, body);
 		ccpHttpHandler.executeHttpRequest(sendgridApiUrl, "POST", headers, body, CcpHttpResponseType.singleRecord, X.email);
-
+		return new CcpMapDecorator();
 	}
 
 	private List<CcpMapDecorator> getPersonalizations(CcpMapDecorator emailParameters) {
