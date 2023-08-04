@@ -1,6 +1,7 @@
 package com.ccp.implementations.emails.sendgrid;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -13,6 +14,7 @@ import com.ccp.especifications.email.CcpEmailSender;
 import com.ccp.especifications.http.CcpHttpHandler;
 import com.ccp.especifications.http.CcpHttpRequester;
 import com.ccp.especifications.http.CcpHttpResponseType;
+import com.ccp.exceptions.http.CcpHttpError;
 enum X{
 	email
 }
@@ -56,9 +58,13 @@ class EmailSenderSendGrid implements CcpEmailSender {
 				.addToList("content", new CcpMapDecorator().put("type", format).put("value", message))
 				;
 		
-//		this.throwErrorTest(sendgridApiKey, sendgridApiUrl, headers, body);
+//		this.throwFakeServerErrorToTestingProcessFlow();
 		ccpHttpHandler.executeHttpRequest(sendgridApiUrl, "POST", headers, body, CcpHttpResponseType.singleRecord, X.email);
 		return new CcpMapDecorator();
+	}
+
+	void throwFakeServerErrorToTestingProcessFlow() {
+		throw new CcpHttpError("url", "POST", new CcpMapDecorator(), "", X.email, 500, "", new HashSet<>());
 	}
 
 	private List<CcpMapDecorator> getPersonalizations(CcpMapDecorator emailParameters) {
