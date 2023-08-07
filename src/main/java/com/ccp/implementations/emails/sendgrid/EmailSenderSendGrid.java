@@ -23,22 +23,29 @@ class EmailSenderSendGrid implements CcpEmailSender {
 	@CcpDependencyInject
 	private CcpHttpRequester ccpHttp;
 	
-	public CcpMapDecorator send(CcpMapDecorator emailParameters) {
+	public CcpMapDecorator send(CcpMapDecorator emailApiParameters) {
+		String apiTokenKeyName = emailApiParameters.getAsString("apiTokenKeyName");
 
+		String apiUrlKeyName = emailApiParameters.getAsString("apiUrlKeyName");
+
+		String message = emailApiParameters.getAsString("emailMessage");
+
+		String subject = emailApiParameters.getAsString("subject");
+
+		String sender = emailApiParameters.getAsString("sender");
 		
-		String sendgridSender = emailParameters.getAsString("sender");
-		String format = emailParameters.getAsString("format");
-		
+		String format = emailApiParameters.getAsString("format");
+
+		List<String> recipients = emailApiParameters.getAsStringList("emails", "email");
+
 		if(format.trim().isEmpty()) {
 			format = "text/html";
 		}
 		
-		String message = emailParameters.getAsString("message");
-		String subject = emailParameters.getAsString("subject");
 		CcpMapDecorator systemProperties = new CcpStringDecorator("application.properties").propertiesFileFromClassLoader();
 		
-		String sendgridApiKey =  systemProperties.getAsString("sendgridApiKey");
-		String sendgridApiUrl =  systemProperties.getAsString("sendGridSendEmailUrl");
+		String sendgridApiKey =  systemProperties.getAsString(apiTokenKeyName);
+		String sendgridApiUrl =  systemProperties.getAsString(apiUrlKeyName);
 
 
 		CcpHttpHandler ccpHttpHandler = new CcpHttpHandler(202, this.ccpHttp);
@@ -49,10 +56,12 @@ class EmailSenderSendGrid implements CcpEmailSender {
 				.put("Accept", "application/json")
 		;
 		
-		List<CcpMapDecorator> personalizations = this.getPersonalizations(emailParameters);
+		String[] emails = recipients.toArray(new String[recipients.size()]);
+
+		List<CcpMapDecorator> personalizations = this.getPersonalizations(emails);
 		
 		CcpMapDecorator body = new CcpMapDecorator()
-				.addToItem("from", "email", sendgridSender)
+				.addToItem("from", "email", sender)
 				.put("subject", subject)
 				.put("personalizations", personalizations)
 				.addToList("content", new CcpMapDecorator().put("type", format).put("value", message))
@@ -67,16 +76,16 @@ class EmailSenderSendGrid implements CcpEmailSender {
 		throw new CcpHttpError("url", "POST", new CcpMapDecorator(), "", X.email, 500, "", new HashSet<>());
 	}
 
-	private List<CcpMapDecorator> getPersonalizations(CcpMapDecorator emailParameters) {
+	private List<CcpMapDecorator> getPersonalizations(String... emails) {
 		
-		List<String> emails = emailParameters.getAsStringList("emails", "email");
-		List<CcpEmailDecorator> invalidEmails = emails.stream().map(email -> new CcpStringDecorator(email).email()).filter(x -> x.isValid() == false).collect(Collectors.toList());
+		List<String> list = Arrays.asList(emails);
+		List<CcpEmailDecorator> invalidEmails = list.stream().map(email -> new CcpStringDecorator(email).email()).filter(x -> x.isValid() == false).collect(Collectors.toList());
 		boolean hasInvalidEmails = invalidEmails.isEmpty() == false;
 		if(hasInvalidEmails) {
 			throw new RuntimeException("some mail address are not valids: " + invalidEmails);
 		}
 		
-		List<Map<String, Object>> to = emails.stream().map(email -> new CcpMapDecorator().put("email",email).content).collect(Collectors.toList());
+		List<Map<String, Object>> to = list.stream().map(email -> new CcpMapDecorator().put("email",email).content).collect(Collectors.toList());
 		List<CcpMapDecorator> asList = Arrays.asList( new CcpMapDecorator().put("to", to));
 		return asList;
 	}
