@@ -15,18 +15,16 @@ import com.ccp.especifications.http.CcpHttpHandler;
 import com.ccp.especifications.http.CcpHttpRequester;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.http.CcpHttpError;
-enum X{
-	email
-}
+
 class EmailSenderSendGrid implements CcpEmailSender {
 
 	@CcpDependencyInject
 	private CcpHttpRequester ccpHttp;
 	
 	public CcpMapDecorator send(CcpMapDecorator emailApiParameters) {
-		String apiTokenKeyName = emailApiParameters.getAsString("apiTokenKeyName");
+		String apiTokenKeyName = emailApiParameters.getAsString("apiToken");
 
-		String apiUrlKeyName = emailApiParameters.getAsString("apiUrlKeyName");
+		String apiUrlKeyName = emailApiParameters.getAsString("apiUrl");
 
 		String message = emailApiParameters.getAsString("emailMessage");
 
@@ -68,12 +66,12 @@ class EmailSenderSendGrid implements CcpEmailSender {
 				;
 		
 //		this.throwFakeServerErrorToTestingProcessFlow();
-		ccpHttpHandler.executeHttpRequest(sendgridApiUrl, "POST", headers, body, CcpHttpResponseType.singleRecord, X.email);
+		ccpHttpHandler.executeHttpRequest(sendgridApiUrl, "POST", headers, body, CcpHttpResponseType.singleRecord);
 		return new CcpMapDecorator();
 	}
 
 	void throwFakeServerErrorToTestingProcessFlow() {
-		throw new CcpHttpError("url", "POST", new CcpMapDecorator(), "", X.email, 500, "", new HashSet<>());
+		throw new CcpHttpError("url", "POST", new CcpMapDecorator(), "", 500, "", new HashSet<>());
 	}
 
 	private List<CcpMapDecorator> getPersonalizations(String... emails) {
