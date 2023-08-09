@@ -22,17 +22,19 @@ class EmailSenderSendGrid implements CcpEmailSender {
 	private CcpHttpRequester ccpHttp;
 	
 	public CcpMapDecorator send(CcpMapDecorator emailApiParameters) {
-		String apiTokenKeyName = emailApiParameters.getAsString("apiToken");
+		String apiTokenKeyName = emailApiParameters.getAsString("token");
 
-		String apiUrlKeyName = emailApiParameters.getAsString("apiUrl");
+		String apiUrlKeyName = emailApiParameters.getAsString("url");
 
-		String message = emailApiParameters.getAsString("emailMessage");
+		String message = emailApiParameters.getAsString("message");
 
 		String subject = emailApiParameters.getAsString("subject");
 
 		String sender = emailApiParameters.getAsString("sender");
 		
 		String format = emailApiParameters.getAsString("format");
+
+		String method = emailApiParameters.getAsString("method");
 
 		List<String> recipients = emailApiParameters.getAsStringList("emails", "email");
 
@@ -44,7 +46,6 @@ class EmailSenderSendGrid implements CcpEmailSender {
 		
 		String sendgridApiKey =  systemProperties.getAsString(apiTokenKeyName);
 		String sendgridApiUrl =  systemProperties.getAsString(apiUrlKeyName);
-
 
 		CcpHttpHandler ccpHttpHandler = new CcpHttpHandler(202, this.ccpHttp);
 		
@@ -66,7 +67,7 @@ class EmailSenderSendGrid implements CcpEmailSender {
 				;
 		
 //		this.throwFakeServerErrorToTestingProcessFlow();
-		ccpHttpHandler.executeHttpRequest(sendgridApiUrl, "POST", headers, body, CcpHttpResponseType.singleRecord);
+		ccpHttpHandler.executeHttpRequest(sendgridApiUrl, method, headers, body, CcpHttpResponseType.singleRecord);
 		return new CcpMapDecorator();
 	}
 
@@ -80,7 +81,7 @@ class EmailSenderSendGrid implements CcpEmailSender {
 		List<CcpEmailDecorator> invalidEmails = list.stream().map(email -> new CcpStringDecorator(email).email()).filter(x -> x.isValid() == false).collect(Collectors.toList());
 		boolean hasInvalidEmails = invalidEmails.isEmpty() == false;
 		if(hasInvalidEmails) {
-			throw new RuntimeException("some mail address are not valids: " + invalidEmails);
+			throw new RuntimeException("some mail addresses are not valids: " + invalidEmails);
 		}
 		
 		List<Map<String, Object>> to = list.stream().map(email -> new CcpMapDecorator().put("email",email).content).collect(Collectors.toList());
