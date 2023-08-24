@@ -1,11 +1,11 @@
 package com.ccp.implementations.emails.sendgrid;
 
-import com.ccp.dependency.injection.CcpModuleExporter;
+import com.ccp.dependency.injection.CcpInstanceProvider;
 
-public class Email implements CcpModuleExporter {
+public class Email implements CcpInstanceProvider {
 
 	@Override
-	public Object export() {
+	public Object getInstance() {
 		return new EmailSenderSendGrid();
 	}
 

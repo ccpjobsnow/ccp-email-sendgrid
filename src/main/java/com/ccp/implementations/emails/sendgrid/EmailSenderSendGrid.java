@@ -9,18 +9,13 @@ import java.util.stream.Collectors;
 import com.ccp.decorators.CcpEmailDecorator;
 import com.ccp.decorators.CcpMapDecorator;
 import com.ccp.decorators.CcpStringDecorator;
-import com.ccp.dependency.injection.CcpDependencyInject;
 import com.ccp.especifications.email.CcpEmailSender;
 import com.ccp.especifications.http.CcpHttpHandler;
-import com.ccp.especifications.http.CcpHttpRequester;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.http.CcpHttpError;
 
 class EmailSenderSendGrid implements CcpEmailSender {
 
-	@CcpDependencyInject
-	private CcpHttpRequester ccpHttp;
-	
 	public CcpMapDecorator send(CcpMapDecorator emailApiParameters) {
 		String apiTokenKeyName = emailApiParameters.getAsString("token");
 
@@ -47,7 +42,7 @@ class EmailSenderSendGrid implements CcpEmailSender {
 		String sendgridApiKey =  systemProperties.getAsString(apiTokenKeyName);
 		String sendgridApiUrl =  systemProperties.getAsString(apiUrlKeyName);
 
-		CcpHttpHandler ccpHttpHandler = new CcpHttpHandler(202, this.ccpHttp);
+		CcpHttpHandler ccpHttpHandler = new CcpHttpHandler(202);
 		
 		CcpMapDecorator headers = new CcpMapDecorator()
 				.put("Authorization", "Bearer " + sendgridApiKey)
