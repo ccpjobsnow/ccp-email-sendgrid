@@ -37,7 +37,7 @@ class EmailSenderSendGrid implements CcpEmailSender {
 			format = "text/html";
 		}
 		
-		CcpMapDecorator systemProperties = new CcpStringDecorator("application.properties").propertiesFileFromClassLoader();
+		CcpMapDecorator systemProperties = new CcpStringDecorator("application.properties").propertiesFileFromFile();
 		
 		String sendgridApiKey =  systemProperties.getAsString(apiTokenKeyName);
 		String sendgridApiUrl =  systemProperties.getAsString(apiUrlKeyName);
