@@ -14,7 +14,7 @@ import com.ccp.especifications.http.CcpHttpHandler;
 import com.ccp.especifications.http.CcpHttpResponseType;
 import com.ccp.exceptions.http.CcpHttpError;
 
-class EmailSenderSendGrid implements CcpEmailSender {
+class SendGridEmailSender implements CcpEmailSender {
 
 	public CcpMapDecorator send(CcpMapDecorator emailApiParameters) {
 		String apiTokenKeyName = emailApiParameters.getAsString("token");
@@ -37,7 +37,7 @@ class EmailSenderSendGrid implements CcpEmailSender {
 			format = "text/html";
 		}
 		
-		CcpMapDecorator systemProperties = new CcpStringDecorator("application.properties").propertiesFileFromFile();
+		CcpMapDecorator systemProperties = new CcpStringDecorator("application.properties").propertiesFrom().environmentVariablesOrClassLoaderOrFile();
 		
 		String sendgridApiKey =  systemProperties.getAsString(apiTokenKeyName);
 		String sendgridApiUrl =  systemProperties.getAsString(apiUrlKeyName);
