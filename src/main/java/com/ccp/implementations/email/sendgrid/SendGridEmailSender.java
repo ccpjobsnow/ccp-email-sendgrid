@@ -1,4 +1,4 @@
-package com.ccp.implementations.emails.sendgrid;
+package com.ccp.implementations.email.sendgrid;
 
 import java.util.Arrays;
 import java.util.HashSet;
