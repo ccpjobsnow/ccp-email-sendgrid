@@ -63,12 +63,12 @@ class SendGridEmailSender implements CcpEmailSender {
 				;
 		
 //		this.throwFakeServerErrorToTestingProcessFlow();
-		ccpHttpHandler.executeHttpRequest(sendgridApiUrl, method, headers, body, CcpHttpResponseType.singleRecord);
+		ccpHttpHandler.executeHttpRequest("sendEmail", sendgridApiUrl, method, headers, body, CcpHttpResponseType.singleRecord);
 		return CcpConstants.EMPTY_JSON;
 	}
 
 	void throwFakeServerErrorToTestingProcessFlow() {
-		throw new CcpHttpError("url", "POST", CcpConstants.EMPTY_JSON, "", 500, "", new HashSet<>());
+		throw new CcpHttpError("sendingEmail", "url", "POST", CcpConstants.EMPTY_JSON, "", 500, "", new HashSet<>());
 	}
 
 	private List<CcpJsonRepresentation> getPersonalizations(String... emails) {
