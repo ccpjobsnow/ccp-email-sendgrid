@@ -1,11 +1,11 @@
 package com.ccp.implementations.email.sendgrid;
 
 import com.ccp.dependency.injection.CcpInstanceProvider;
+import com.ccp.especifications.email.CcpEmailSender;
 
-public class CcpSendGridEmailSender implements CcpInstanceProvider {
-
+public class CcpSendGridEmailSender implements CcpInstanceProvider<CcpEmailSender> {
 	
-	public Object getInstance() {
+	public CcpEmailSender getInstance() {
 		return new SendGridEmailSender();
 	}
 
