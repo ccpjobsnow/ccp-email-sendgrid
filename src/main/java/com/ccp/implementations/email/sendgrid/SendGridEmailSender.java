@@ -68,7 +68,7 @@ class SendGridEmailSender implements CcpEmailSender {
 		return CcpOtherConstants.EMPTY_JSON;
 	}
 
-	void throwFakeServerErrorToTestingProcessFlow() {
+	CcpEmailSender throwFakeServerErrorToTestingProcessFlow() {
 		throw new CcpHttpError("sendingEmail", "url", "POST", CcpOtherConstants.EMPTY_JSON, "", 500, "", new HashSet<>());
 	}
 
