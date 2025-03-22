@@ -68,10 +68,6 @@ class SendGridEmailSender implements CcpEmailSender {
 		return CcpOtherConstants.EMPTY_JSON;
 	}
 
-	CcpEmailSender throwFakeServerErrorToTestingProcessFlow() {
-		throw new CcpHttpError("sendingEmail", "url", "POST", CcpOtherConstants.EMPTY_JSON, "", 500, "", new HashSet<>());
-	}
-
 	private List<CcpJsonRepresentation> getPersonalizations(String... emails) {
 		
 		List<String> list = Arrays.asList(emails);
