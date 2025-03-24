@@ -1,7 +1,6 @@
 package com.ccp.implementations.email.sendgrid;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -14,7 +13,8 @@ import com.ccp.decorators.CcpStringDecorator;
 import com.ccp.especifications.email.CcpEmailSender;
 import com.ccp.especifications.http.CcpHttpHandler;
 import com.ccp.especifications.http.CcpHttpResponseType;
-import com.ccp.exceptions.http.CcpHttpError;
+import com.ccp.exceptions.email.CcpInvalidEmailAdresses;
+import com.ccp.http.CcpHttpMethods;
 
 class SendGridEmailSender implements CcpEmailSender {
 
@@ -31,7 +31,7 @@ class SendGridEmailSender implements CcpEmailSender {
 		
 		String format = emailApiParameters.getAsString("format");
 
-		String method = emailApiParameters.getAsString("method");
+		CcpHttpMethods method = CcpHttpMethods.valueOf(emailApiParameters.getAsString("method"));
 
 		List<String> recipients = emailApiParameters.getAsStringList("emails", CcpStringConstants.EMAIL.value);
 
@@ -73,8 +73,9 @@ class SendGridEmailSender implements CcpEmailSender {
 		List<String> list = Arrays.asList(emails);
 		List<CcpEmailDecorator> invalidEmails = list.stream().map(email -> new CcpStringDecorator(email).email()).filter(x -> x.isValid() == false).collect(Collectors.toList());
 		boolean hasInvalidEmails = invalidEmails.isEmpty() == false;
+		
 		if(hasInvalidEmails) {
-			throw new RuntimeException("some mail addresses are not valids: " + invalidEmails);
+			throw new CcpInvalidEmailAdresses(invalidEmails);
 		}
 		
 		List<Map<String, Object>> to = list.stream().map(email -> CcpOtherConstants.EMPTY_JSON.put(CcpStringConstants.EMAIL.value,email).content).collect(Collectors.toList());
